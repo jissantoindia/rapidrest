@@ -21,10 +21,10 @@ A high-performance, developer-friendly PHP library for building RESTful APIs, in
 
 ```bash
 # Create a new project
-composer create-project jissantoindia/rapidrest my-api
+composer create-project jissanto/rapidrest my-api
 
 # Or add to existing project
-composer require jissantoindia/rapidrest
+composer require jissanto/rapidrest
 ```
 
 ## Quick Start
