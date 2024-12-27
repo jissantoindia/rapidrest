@@ -13,18 +13,9 @@ use function FastRoute\simpleDispatcher;
 
 class Router
 {
-    private Dispatcher $dispatcher;
     private array $routes = [];
     private array $middleware = [];
-
-    public function __construct()
-    {
-        $this->dispatcher = simpleDispatcher(function (RouteCollector $r) {
-            foreach ($this->routes as $route) {
-                $r->addRoute($route['method'], $route['pattern'], $route['handler']);
-            }
-        });
-    }
+    private ?Dispatcher $dispatcher = null;
 
     public function addRoute(string $method, string $pattern, callable $handler): self
     {
@@ -33,6 +24,7 @@ class Router
             'pattern' => $pattern,
             'handler' => $handler
         ];
+        $this->dispatcher = null;
         return $this;
     }
 
@@ -64,6 +56,14 @@ class Router
 
     public function dispatch(Request $request): Response
     {
+        if ($this->dispatcher === null) {
+            $this->dispatcher = simpleDispatcher(function (RouteCollector $r) {
+                foreach ($this->routes as $route) {
+                    $r->addRoute($route['method'], $route['pattern'], $route['handler']);
+                }
+            });
+        }
+
         $routeInfo = $this->dispatcher->dispatch(
             $request->getMethod(),
             $request->getUri()->getPath()
@@ -71,34 +71,52 @@ class Router
 
         switch ($routeInfo[0]) {
             case Dispatcher::NOT_FOUND:
-                return new Response(404, [], 'Not Found');
+                return new Response(404, [], ['error' => 'Not Found']);
+
             case Dispatcher::METHOD_NOT_ALLOWED:
-                return new Response(405, [], 'Method Not Allowed');
+                return new Response(405, [], ['error' => 'Method Not Allowed']);
+
             case Dispatcher::FOUND:
                 $handler = $routeInfo[1];
                 $vars = $routeInfo[2];
-                
+
                 // Apply middleware
-                $response = $this->applyMiddleware($request, function (Request $request) use ($handler, $vars) {
-                    return $handler($request, ...array_values($vars));
-                });
-                
-                return $response;
+                $next = function (Request $request) use ($handler, $vars) {
+                    return $this->handleRequest($request, $handler, $vars);
+                };
+
+                foreach (array_reverse($this->middleware) as $middleware) {
+                    $next = function (Request $request) use ($middleware, $next) {
+                        return $middleware->process($request, $next);
+                    };
+                }
+
+                return $next($request);
         }
 
-        return new Response(500, [], 'Internal Server Error');
+        return new Response(500, [], ['error' => 'Internal Server Error']);
     }
 
-    private function applyMiddleware(Request $request, callable $handler): Response
+    private function handleRequest(Request $request, callable $handler, array $vars): Response
     {
-        $next = $handler;
-        
-        foreach (array_reverse($this->middleware) as $middleware) {
-            $next = function (Request $request) use ($middleware, $next) {
-                return $middleware->process($request, $next);
-            };
-        }
+        try {
+            $response = $handler($request, ...array_values($vars));
 
-        return $next($request);
+            if (!$response instanceof Response) {
+                $response = new Response(200, [], $response);
+            }
+
+            return $response;
+        } catch (\Throwable $e) {
+            return new Response(
+                500,
+                [],
+                [
+                    'error' => 'Internal Server Error',
+                    'message' => $e->getMessage(),
+                    'trace' => $_ENV['APP_DEBUG'] ? $e->getTraceAsString() : null
+                ]
+            );
+        }
     }
 }

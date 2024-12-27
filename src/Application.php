@@ -23,27 +23,27 @@ class Application
         $this->container = new Container();
     }
 
-    public function get(string $pattern, callable $handler): self
+    public function get(string $pattern, callable|array $handler): self
     {
-        $this->router->get($pattern, $handler);
+        $this->router->get($pattern, $this->resolveHandler($handler));
         return $this;
     }
 
-    public function post(string $pattern, callable $handler): self
+    public function post(string $pattern, callable|array $handler): self
     {
-        $this->router->post($pattern, $handler);
+        $this->router->post($pattern, $this->resolveHandler($handler));
         return $this;
     }
 
-    public function put(string $pattern, callable $handler): self
+    public function put(string $pattern, callable|array $handler): self
     {
-        $this->router->put($pattern, $handler);
+        $this->router->put($pattern, $this->resolveHandler($handler));
         return $this;
     }
 
-    public function delete(string $pattern, callable $handler): self
+    public function delete(string $pattern, callable|array $handler): self
     {
-        $this->router->delete($pattern, $handler);
+        $this->router->delete($pattern, $this->resolveHandler($handler));
         return $this;
     }
 
@@ -84,6 +84,51 @@ class Application
             );
         }
 
-        $response->send();
+        $this->send($response);
+    }
+
+    private function send(Response $response): void
+    {
+        if (!headers_sent()) {
+            header(sprintf(
+                'HTTP/%s %s %s',
+                $response->getProtocolVersion(),
+                $response->getStatusCode(),
+                $response->getReasonPhrase()
+            ));
+
+            foreach ($response->getHeaders() as $name => $values) {
+                foreach ($values as $value) {
+                    header(sprintf('%s: %s', $name, $value), false);
+                }
+            }
+        }
+
+        echo $response->getBody();
+    }
+
+    private function resolveHandler(callable|array $handler): callable
+    {
+        if (is_callable($handler)) {
+            return $handler;
+        }
+
+        if (is_array($handler) && count($handler) === 2) {
+            [$class, $method] = $handler;
+            
+            if (!class_exists($class)) {
+                throw new \RuntimeException("Controller class {$class} not found");
+            }
+
+            $controller = $this->container->get($class);
+            
+            if (!method_exists($controller, $method)) {
+                throw new \RuntimeException("Method {$method} not found in controller {$class}");
+            }
+
+            return [$controller, $method];
+        }
+
+        throw new \InvalidArgumentException('Invalid route handler');
     }
 }
