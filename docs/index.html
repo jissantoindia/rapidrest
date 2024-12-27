@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RapidRest - Modern PHP REST Framework</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <!-- Sidebar -->
+    <aside class="fixed top-0 left-0 w-64 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+        <nav class="p-6">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">RapidRest</h1>
+            
+            <!-- Getting Started -->
+            <div class="mb-8">
+                <h2 class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-3">
+                    Getting Started
+                </h2>
+                <a href="#installation" class="block text-gray-700 dark:text-gray-300 hover:text-primary mb-2">Installation</a>
+                <a href="#cli-tools" class="block text-gray-700 dark:text-gray-300 hover:text-primary mb-2">CLI Tools</a>
+                <a href="#migrations" class="block text-gray-700 dark:text-gray-300 hover:text-primary mb-2">Migrations</a>
+            </div>
+
+            <!-- Core Features -->
+            <div class="mb-8">
+                <h2 class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-3">
+                    Core Features
+                </h2>
+                <a href="#routing" class="block text-gray-700 dark:text-gray-300 hover:text-primary mb-2">Routing</a>
+                <a href="#controllers" class="block text-gray-700 dark:text-gray-300 hover:text-primary mb-2">Controllers</a>
+                <a href="#models" class="block text-gray-700 dark:text-gray-300 hover:text-primary mb-2">Models</a>
+                <a href="#database" class="block text-gray-700 dark:text-gray-300 hover:text-primary mb-2">Database</a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="ml-64 p-8">
+        <!-- CLI Tools -->
+        <section id="cli-tools" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">CLI Tools</h2>
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <p class="text-gray-600 dark:text-gray-400 mb-4">RapidRest comes with powerful CLI tools to help you manage your application:</p>
+                
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Available Commands</h3>
+                <pre><code class="language-bash"># Create a new migration
+./rapid make:migration create_users_table
+
+# Run all pending migrations
+./rapid migrate
+
+# Rollback the last batch of migrations
+./rapid migrate:rollback
+
+# Refresh the entire database
+./rapid migrate:refresh
+
+# Check migration status
+./rapid migrate:status</code></pre>
+            </div>
+        </section>
+
+        <!-- Migrations -->
+        <section id="migrations" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Migrations</h2>
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Create and manage your database schema using migrations:</p>
+
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-2">Creating a Migration</h3>
+                <pre><code class="language-php">// migrations/20231228_create_users_table.php
+class CreateUsersTable extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('users');
+    }
+}</code></pre>
+
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mt-6 mb-2">Available Column Types</h3>
+                <pre><code class="language-php">$table->id();                  // Auto-incrementing ID
+$table->string('name');         // VARCHAR
+$table->text('description');    // TEXT
+$table->integer('count');       // INTEGER
+$table->float('amount');        // FLOAT
+$table->decimal('price', 8, 2); // DECIMAL
+$table->boolean('is_active');   // BOOLEAN
+$table->datetime('sent_at');    // DATETIME
+$table->timestamp('created_at'); // TIMESTAMP
+$table->json('settings');       // JSON
+$table->timestamps();           // created_at & updated_at</code></pre>
+
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mt-6 mb-2">Column Modifiers</h3>
+                <pre><code class="language-php">$table->string('email')->unique();     // Add unique constraint
+$table->integer('views')->default(0);  // Set default value
+$table->string('name')->nullable();    // Allow NULL values
+$table->integer('user_id')->unsigned(); // Unsigned integer
+$table->foreign('user_id')             // Add foreign key
+    ->references('id')
+    ->on('users')
+    ->onDelete('cascade');</code></pre>
+            </div>
+        </section>
+    </main>
+
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

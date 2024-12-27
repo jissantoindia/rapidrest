@@ -1,0 +1,43 @@
+/* Base styles */
+:root {
+    --primary-color: #4f46e5;
+}
+
+/* Code blocks */
+pre {
+    margin: 1rem 0;
+    border-radius: 0.5rem;
+    background-color: #1e1e1e;
+}
+
+pre code {
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Dark mode */
+.dark pre {
+    background-color: #1a1a1a;
+}
+
+/* Links */
+a:hover {
+    color: var(--primary-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    main {
+        margin-left: 0;
+        padding: 1rem;
+    }
+    
+    aside {
+        transform: translateX(-100%);
+    }
+    
+    aside.open {
+        transform: translateX(0);
+    }
+}

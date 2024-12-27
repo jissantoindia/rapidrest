@@ -1,0 +1,101 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/vendor/autoload.php';
+
+use RapidRest\Console\Commands\MigrationCommand;
+use RapidRest\Database\Migration\MigrationService;
+use RapidRest\Database\Schema\SchemaManager;
+
+// Load environment variables
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+// Create PDO connection
+$dsn = sprintf(
+    'mysql:host=%s;dbname=%s;charset=utf8mb4',
+    $_ENV['DB_HOST'],
+    $_ENV['DB_DATABASE']
+);
+
+try {
+    $pdo = new PDO($dsn, $_ENV['DB_USERNAME'], $_ENV['DB_PASSWORD'], [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ]);
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage() . "\n");
+}
+
+// Create container and register services
+$container = new \RapidRest\Container\Container();
+
+$container->singleton(PDO::class, function () use ($pdo) {
+    return $pdo;
+});
+
+$container->singleton(SchemaManager::class, function ($container) {
+    return new SchemaManager($container->get(PDO::class));
+});
+
+$container->singleton(MigrationService::class, function ($container) {
+    return new MigrationService(
+        $container->get(PDO::class),
+        $container->get(SchemaManager::class)
+    );
+});
+
+$container->singleton(MigrationCommand::class, function ($container) {
+    return new MigrationCommand($container->get(MigrationService::class));
+});
+
+$migrationCommand = $container->get(MigrationCommand::class);
+
+// Parse command line arguments
+$command = $argv[1] ?? 'help';
+$argument = $argv[2] ?? null;
+
+switch ($command) {
+    case 'make:migration':
+        if (!$argument) {
+            echo "Error: Migration name is required\n";
+            echo "Usage: php rapid make:migration migration_name\n";
+            exit(1);
+        }
+        $migrationCommand->create($argument);
+        break;
+
+    case 'migrate':
+        $migrationCommand->migrate();
+        break;
+
+    case 'migrate:rollback':
+        $migrationCommand->rollback();
+        break;
+
+    case 'migrate:refresh':
+        $migrationCommand->refresh();
+        break;
+
+    case 'migrate:status':
+        $migrationCommand->status();
+        break;
+
+    case 'help':
+    default:
+        echo "\nRapidRest CLI Tool\n";
+        echo "================\n\n";
+        echo "Available commands:\n";
+        echo "  make:migration    Create a new migration file\n";
+        echo "  migrate           Run all pending migrations\n";
+        echo "  migrate:rollback  Rollback the last batch of migrations\n";
+        echo "  migrate:refresh   Rollback all migrations and migrate again\n";
+        echo "  migrate:status    Show migration status\n\n";
+        echo "Usage:\n";
+        echo "  php rapid [command] [arguments]\n\n";
+        echo "Examples:\n";
+        echo "  php rapid make:migration create_users_table\n";
+        echo "  php rapid migrate\n";
+        break;
+}
