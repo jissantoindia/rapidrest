@@ -1,5 +1,5 @@
 {
-    "name": "rapidrest/rapidrest",
+    "name": "jissanto/rapidrest",
     "description": "High-performance PHP library for building RESTful APIs with modern features like migrations, CLI tools, and more",
     "type": "library",
     "keywords": [
@@ -13,12 +13,12 @@
         "migrations",
         "cli"
     ],
-    "homepage": "https://github.com/yourusername/rapidrest",
+    "homepage": "https://github.com/jissanto/rapidrest",
     "license": "MIT",
     "authors": [
         {
-            "name": "Your Name",
-            "email": "your.email@example.com",
+            "name": "Jiss Anto",
+            "email": "jissanto@gmail.com",
             "role": "Developer"
         }
     ],
